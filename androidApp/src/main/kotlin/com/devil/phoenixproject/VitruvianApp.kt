@@ -12,6 +12,7 @@ import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.devil.phoenixproject.data.migration.MigrationManager
 import com.devil.phoenixproject.data.sync.SupabaseConfig
+import com.devil.phoenixproject.di.BootstrapSupabaseConfigQualifier
 import com.devil.phoenixproject.di.initKoin
 import com.devil.phoenixproject.util.ActivityHolder
 import com.devil.phoenixproject.util.DeviceInfo
@@ -45,7 +46,9 @@ open class VitruvianApp :
             androidContext(this@VitruvianApp)
             modules(
                 module {
-                    single {
+                    // Bootstrap only — the config the app actually uses is resolved from
+                    // the user's Portal server selection (PortalServerRepository).
+                    single(BootstrapSupabaseConfigQualifier) {
                         SupabaseConfig(
                             url = BuildConfig.SUPABASE_URL,
                             anonKey = BuildConfig.SUPABASE_ANON_KEY,

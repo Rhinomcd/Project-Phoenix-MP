@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Extension
@@ -83,6 +84,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.devil.phoenixproject.data.sync.PortalServerRepository
 import com.devil.phoenixproject.data.sync.SyncTriggerManager
 import com.devil.phoenixproject.domain.model.BleCompatibilitySetting
 import com.devil.phoenixproject.presentation.components.DestructiveConfirmDialog
@@ -275,6 +277,7 @@ fun SettingsTab(
     onDeleteAllWorkouts: () -> Unit,
     onNavigateToConnectionLogs: () -> Unit,
     onNavigateToDiagnostics: () -> Unit,
+    onNavigateToPortalServers: () -> Unit,
     onNavigateToLinkAccount: () -> Unit,
     onNavigateToIntegrations: () -> Unit,
     connectionError: String?,
@@ -311,6 +314,10 @@ fun SettingsTab(
     // Inject SyncTriggerManager for sync error indicator
     val syncTriggerManager: SyncTriggerManager = koinInject()
     val hasSyncError by syncTriggerManager.hasPersistentError.collectAsState()
+    // Inject PortalServerRepository to label the Portal Server row with the current choice
+    val portalServerRepository: PortalServerRepository = koinInject()
+    val portalServers by portalServerRepository.servers.collectAsState()
+    val selectedPortalServerId by portalServerRepository.selectedServerId.collectAsState()
 
     // Set global title
     val settingsTitle = stringResource(Res.string.settings_title)
@@ -1103,6 +1110,39 @@ fun SettingsTab(
                     )
                 }
                 Spacer(modifier = Modifier.height(Spacing.small))
+
+                OutlinedButton(
+                    onClick = onNavigateToPortalServers,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                ) {
+                    Icon(
+                        Icons.Default.Dns,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.small))
+                    Text(
+                        "Portal Server",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    portalServers.firstOrNull { it.id == selectedPortalServerId }?.name.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.medium))
 
                 OutlinedButton(
                     onClick = onNavigateToDiagnostics,

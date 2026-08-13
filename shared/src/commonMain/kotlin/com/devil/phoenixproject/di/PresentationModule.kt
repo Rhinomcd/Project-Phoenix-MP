@@ -13,6 +13,7 @@ import com.devil.phoenixproject.presentation.viewmodel.ExternalProgramsViewModel
 import com.devil.phoenixproject.presentation.viewmodel.ExternalRoutinesViewModel
 import com.devil.phoenixproject.presentation.viewmodel.GamificationViewModel
 import com.devil.phoenixproject.presentation.viewmodel.IntegrationsViewModel
+import com.devil.phoenixproject.presentation.viewmodel.PortalServersViewModel
 import com.devil.phoenixproject.presentation.viewmodel.ProfileViewModel
 import com.devil.phoenixproject.presentation.viewmodel.ProfileSwitcherViewModel
 import com.devil.phoenixproject.presentation.viewmodel.ThemeViewModel
@@ -33,6 +34,7 @@ val presentationModule = module {
     factory { ExternalProgramsViewModel(get(), get(), get()) }
     factory { ExternalMeasurementsViewModel(get(), get()) }
     factory { AssessmentViewModel(get(), get(), get()) }
+    factory { PortalServersViewModel(get(), get()) }
     factory {
         ProfileViewModel(
             profiles = get(),

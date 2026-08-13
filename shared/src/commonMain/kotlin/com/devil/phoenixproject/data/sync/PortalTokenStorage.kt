@@ -199,6 +199,22 @@ class PortalTokenStorage(private val settings: Settings) {
         settings[phasePRBackfillCheckpointKey(profileId)] = timestamp
     }
 
+    /**
+     * Drops every sync progress marker: the last-sync timestamp and all per-profile
+     * phase-PR backfill checkpoints.
+     *
+     * Called when the Portal server selection changes ([PortalServerRepository]). A
+     * checkpoint only means "synced up to here" for the backend it was recorded
+     * against, so keeping it would make the first sync against a different server
+     * resume mid-history and silently skip everything before that point.
+     */
+    fun clearSyncCheckpoints() {
+        settings.remove(KEY_LAST_SYNC)
+        settings.keys
+            .filter { it.startsWith(KEY_PHASE_PR_BACKFILL_CHECKPOINT_PREFIX) }
+            .forEach { settings.remove(it) }
+    }
+
     fun updatePremiumStatus(isPremium: Boolean) {
         settings[KEY_IS_PREMIUM] = isPremium
         _currentUser.value = _currentUser.value?.copy(isPremium = isPremium)

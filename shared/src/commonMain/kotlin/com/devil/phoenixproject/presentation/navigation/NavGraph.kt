@@ -476,6 +476,9 @@ fun NavGraph(
                     onNavigateToDiagnostics = {
                         navController.navigate(NavigationRoutes.Diagnostics.route)
                     },
+                    onNavigateToPortalServers = {
+                        navController.navigate(NavigationRoutes.PortalServers.route)
+                    },
                     onNavigateToLinkAccount = {
                         navController.navigate(NavigationRoutes.LinkAccount.route)
                     },
@@ -594,6 +597,39 @@ fun NavGraph(
             ) {
                 DiagnosticsScreen(
                     mainViewModel = viewModel,
+                )
+            }
+
+            // Portal server screen - pick or add the Supabase backend used for sync
+            composable(
+                route = NavigationRoutes.PortalServers.route,
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300),
+                    )
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300),
+                    )
+                },
+                popEnterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300),
+                    )
+                },
+                popExitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300),
+                    )
+                },
+            ) {
+                PortalServersScreen(
+                    onSetTitle = viewModel::updateTopBarTitle,
                 )
             }
 

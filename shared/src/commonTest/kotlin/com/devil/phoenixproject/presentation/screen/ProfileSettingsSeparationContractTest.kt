@@ -164,6 +164,7 @@ class ProfileSettingsSeparationContractTest {
                 onDeleteAllWorkouts: () -> Unit,
                 onNavigateToConnectionLogs: () -> Unit,
                 onNavigateToDiagnostics: () -> Unit,
+                onNavigateToPortalServers: () -> Unit,
                 onNavigateToLinkAccount: () -> Unit,
                 onNavigateToIntegrations: () -> Unit,
                 connectionError: String?,
@@ -376,6 +377,7 @@ class ProfileSettingsSeparationContractTest {
             "onDynamicColorEnabledChange = onDynamicColorEnabledChange",
             "onNavigateToConnectionLogs" to "NavigationRoutes.ConnectionLogs.route",
             "onNavigateToDiagnostics" to "NavigationRoutes.Diagnostics.route",
+            "onNavigateToPortalServers" to "NavigationRoutes.PortalServers.route",
             "onNavigateToLinkAccount" to "NavigationRoutes.LinkAccount.route",
             "onNavigateToIntegrations" to "NavigationRoutes.Integrations.route",
         ).forEach { contract ->

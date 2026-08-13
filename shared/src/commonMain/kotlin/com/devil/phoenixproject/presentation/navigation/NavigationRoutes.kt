@@ -27,6 +27,7 @@ sealed class NavigationRoutes(val route: String) {
     object EquipmentRack : NavigationRoutes("equipment_rack")
     object ConnectionLogs : NavigationRoutes("connection_logs")
     object Diagnostics : NavigationRoutes("diagnostics")
+    object PortalServers : NavigationRoutes("portal_servers")
     object Badges : NavigationRoutes("badges")
     object RoutineEditor : NavigationRoutes("routine_editor/{routineId}") {
         fun createRoute(routineId: String) = "routine_editor/${routineId.encodeRouteSegment()}"

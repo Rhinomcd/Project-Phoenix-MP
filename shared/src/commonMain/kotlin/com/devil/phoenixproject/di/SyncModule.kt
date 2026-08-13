@@ -7,6 +7,7 @@ import com.devil.phoenixproject.data.integration.IntegrationManager
 import com.devil.phoenixproject.data.migration.RequiredMigrationGate
 import com.devil.phoenixproject.data.repository.*
 import com.devil.phoenixproject.data.sync.PortalApiClient
+import com.devil.phoenixproject.data.sync.PortalServerRepository
 import com.devil.phoenixproject.data.sync.ProfilePreferenceSyncCodec
 import com.devil.phoenixproject.data.sync.ProfilePreferenceSyncRepository
 import com.devil.phoenixproject.data.sync.SqlDelightProfilePreferenceSyncRepository
@@ -19,6 +20,9 @@ import org.koin.dsl.module
 val syncModule = module {
     // Portal Sync (must be before Auth since PortalAuthRepository depends on these)
     single { PortalTokenStorage(get(SecureSettingsQualifier)) }
+    single { PortalServerRepository(get(), get(BootstrapSupabaseConfigQualifier), get()) }
+    // Resolved once, at graph build: a server change applies on the next launch only.
+    single<SupabaseConfig> { get<PortalServerRepository>().activeSupabaseConfig() }
     single {
         PortalApiClient(
             supabaseConfig = get<SupabaseConfig>(),

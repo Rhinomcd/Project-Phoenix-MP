@@ -52,7 +52,9 @@ private val PORTAL_KEYS = listOf(
 )
 
 actual val platformModule: Module = module {
-    single {
+    // Bootstrap only — the config the app actually uses is resolved from the user's
+    // Portal server selection (PortalServerRepository).
+    single(BootstrapSupabaseConfigQualifier) {
         val bundle = NSBundle.mainBundle
         val url = bundle.objectForInfoDictionaryKey("SUPABASE_URL") as? String
         val anonKey = bundle.objectForInfoDictionaryKey("SUPABASE_ANON_KEY") as? String

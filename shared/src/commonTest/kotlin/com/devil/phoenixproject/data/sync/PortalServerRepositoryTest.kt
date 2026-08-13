@@ -67,6 +67,17 @@ class PortalServerRepositoryTest {
     }
 
     @Test
+    fun addServerRejectsUrlsWithQueryOrFragment() {
+        val repository = createRepository()
+
+        // API paths are appended by concatenation; a query here would corrupt every endpoint.
+        assertTrue(repository.addServer("Home", "https://portal.example.com?tenant=x", "key").isFailure)
+        assertTrue(repository.addServer("Home", "https://portal.example.com#frag", "key").isFailure)
+        assertTrue(repository.addServer("Home", "https://?x", "key").isFailure)
+        assertEquals(1, repository.servers.value.size)
+    }
+
+    @Test
     fun addServerAllowsPlainHttpForLocalBackends() {
         val repository = createRepository()
 
@@ -104,6 +115,40 @@ class PortalServerRepositoryTest {
 
         assertEquals(PortalServerRepository.BUILT_IN_SERVER_ID, repository.selectedServerId.value)
         assertEquals(bootstrap, repository.activeSupabaseConfig())
+    }
+
+    @Test
+    fun fallbackFromMissingServerRepairsSelectionAndClearsCheckpoints() {
+        val settings = MapSettings()
+        settings.putString("portal_selected_server_id", "deleted-server")
+        val secureSettings = MapSettings()
+        val tokenStorage = PortalTokenStorage(secureSettings)
+        tokenStorage.setLastSyncTimestamp(1_700_000_000_000L)
+        tokenStorage.setPhasePRBackfillCheckpoint("profile-a", 42L)
+
+        PortalServerRepository(settings, bootstrap, tokenStorage)
+
+        // Falling back IS a server transition: the checkpoints belong to the missing
+        // backend and must not seed the first sync against the built-in server.
+        assertEquals(PortalServerRepository.BUILT_IN_SERVER_ID, settings.getStringOrNull("portal_selected_server_id"))
+        assertEquals(0L, tokenStorage.getLastSyncTimestamp())
+        assertEquals(0L, tokenStorage.getPhasePRBackfillCheckpoint("profile-a"))
+    }
+
+    @Test
+    fun matchingPersistedSelectionDoesNotClearCheckpointsAtStartup() {
+        val settings = MapSettings()
+        val secureSettings = MapSettings()
+        val added = PortalServerRepository(settings, bootstrap, PortalTokenStorage(secureSettings))
+            .addServer("Home", "https://portal.home.lan", "home-key")
+            .getOrThrow()
+        PortalServerRepository(settings, bootstrap, PortalTokenStorage(secureSettings)).selectServer(added.id)
+        val tokenStorage = PortalTokenStorage(secureSettings)
+        tokenStorage.setLastSyncTimestamp(1_700_000_000_000L)
+
+        PortalServerRepository(settings, bootstrap, tokenStorage)
+
+        assertEquals(1_700_000_000_000L, tokenStorage.getLastSyncTimestamp())
     }
 
     // ===== selectServer =====

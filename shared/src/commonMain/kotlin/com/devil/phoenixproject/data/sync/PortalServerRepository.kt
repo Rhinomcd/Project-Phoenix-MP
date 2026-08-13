@@ -76,6 +76,19 @@ class PortalServerRepository(
     /** True once the selection changed in this process; not persisted — a restart clears it. */
     val restartRequired: StateFlow<Boolean> = _restartRequired.asStateFlow()
 
+    init {
+        // A persisted selection can point at an entry that no longer exists (deleted
+        // externally, or the custom-server payload was corrupt). Falling back to the
+        // built-in server is a server transition like any other: repair the persisted
+        // selection and drop the missing server's checkpoints, or the first sync against
+        // the built-in server would resume from progress recorded against another backend.
+        val persisted: String? = settings[KEY_SELECTED_SERVER_ID]
+        if (persisted != null && persisted != _selectedServerId.value) {
+            settings[KEY_SELECTED_SERVER_ID] = _selectedServerId.value
+            tokenStorage.clearSyncCheckpoints()
+        }
+    }
+
     /** Resolves the selected entry to a [SupabaseConfig]. Called once, at DI-graph build. */
     fun activeSupabaseConfig(): SupabaseConfig {
         val selected = _servers.value.firstOrNull { it.id == _selectedServerId.value } ?: builtInServer
@@ -147,13 +160,17 @@ class PortalServerRepository(
 
 /**
  * Returns [url] trimmed and stripped of trailing slashes, or null when it is not an
- * http/https URL with a non-blank host.
+ * http/https URL with a non-blank host. Query and fragment components are rejected:
+ * API paths are appended to this value by string concatenation, so a trailing
+ * `?tenant=x` would silently turn every endpoint path into query content.
  */
 fun normalizePortalServerUrl(url: String): String? {
     val trimmed = url.trim().trimEnd('/')
     val scheme = trimmed.substringBefore("://", missingDelimiterValue = "").lowercase()
     if (scheme != "http" && scheme != "https") return null
-    val host = trimmed.substringAfter("://").substringBefore('/')
+    val rest = trimmed.substringAfter("://")
+    if (rest.contains('?') || rest.contains('#')) return null
+    val host = rest.substringBefore('/')
     if (host.isBlank() || host.any { it.isWhitespace() }) return null
     return trimmed
 }

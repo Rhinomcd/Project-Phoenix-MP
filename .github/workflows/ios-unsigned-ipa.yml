@@ -1,0 +1,137 @@
+# Fork-only workflow: builds an UNSIGNED .ipa for sideloading (AltStore/SideStore
+# re-sign at install time with a personal Apple ID). No Apple Developer account,
+# no secrets. Triggered by any push to build/ios-ipa — update this branch from the
+# feature branch and push to get a fresh IPA artifact.
+#
+# Build steps mirror ios-testflight.yml (shared framework, compose resources,
+# xcframework); only signing/export/upload are replaced.
+name: iOS Unsigned IPA
+
+on:
+  push:
+    branches: [build/ios-ipa]
+
+permissions:
+  contents: read
+
+env:
+  SCHEME: VitruvianPhoenix
+  PROJECT_PATH: iosApp/VitruvianPhoenix/VitruvianPhoenix.xcodeproj
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx8g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g"
+
+jobs:
+  build-unsigned-ipa:
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Write Supabase.xcconfig (official bootstrap values)
+        # Public anon key — safe to inline. The in-app Portal Server list
+        # (Settings -> Developer Tools) is how custom/self-hosted backends
+        # are configured; the bootstrap only backs the built-in entry.
+        run: |
+          mkdir -p iosApp/VitruvianPhoenix/Config
+          # xcconfig treats `//` as an inline comment: escape as `/$()/`.
+          {
+            echo "SUPABASE_URL = https:/$()/ilzlswmatadlnsuxatcv.supabase.co"
+            echo "SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsemxzd21hdGFkbG5zdXhhdGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4ODA5MzUsImV4cCI6MjA4MjQ1NjkzNX0._fNm07SvkCsMId2oBrg-Rf_5HCypTwLkjWu0T_5QizA"
+          } > iosApp/VitruvianPhoenix/Config/Supabase.xcconfig
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache Kotlin/Native compiler
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-2.3.0-iosArm64
+          restore-keys: |
+            ${{ runner.os }}-konan-2.3.0-
+            ${{ runner.os }}-konan-
+
+      - name: Build shared framework and resources
+        run: |
+          ./gradlew :shared:linkReleaseFrameworkIosArm64 \
+            :shared:generateComposeResClass \
+            :shared:iosArm64ProcessResources \
+            --no-parallel -Pskip.supabase.check=true
+
+      - name: Copy Compose resources to Xcode project directory
+        run: |
+          RESOURCE_DST="iosApp/VitruvianPhoenix/compose-resources"
+          rm -rf "$RESOURCE_DST"
+          mkdir -p "$RESOURCE_DST"
+          PROCESSED="shared/build/processedResources/iosArm64/main"
+          if [ -d "$PROCESSED/composeResources" ]; then
+            cp -R "$PROCESSED/composeResources" "$RESOURCE_DST/"
+          else
+            FOUND=false
+            while IFS= read -r d; do
+              if [ "$(find "$d" -type f 2>/dev/null | head -1)" ]; then
+                cp -R "$d" "$RESOURCE_DST/"
+                FOUND=true
+                break
+              fi
+            done < <(find shared/build -type d -name composeResources \
+              -not -path "*/releaseFramework/*" \
+              -not -path "*/debugFramework/*" \
+              -not -path "*/compose-resources/*" 2>/dev/null)
+            if [ "$FOUND" != true ]; then
+              echo "ERROR: No compose resources found under shared/build!"
+              exit 1
+            fi
+          fi
+
+      - name: Create XCFramework
+        run: |
+          FRAMEWORK="shared/build/bin/iosArm64/releaseFramework/shared.framework"
+          [ -d "$FRAMEWORK" ] || { echo "ERROR: framework missing"; exit 1; }
+          xcodebuild -create-xcframework \
+            -framework "$FRAMEWORK" \
+            -output shared/build/XCFrameworks/release/shared.xcframework
+
+      - name: Link framework to Xcode path
+        run: |
+          mkdir -p shared/build/bin/iosArm64/debugFramework
+          ln -sfn ../releaseFramework/shared.framework shared/build/bin/iosArm64/debugFramework/shared.framework
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+
+      - name: Build unsigned app
+        run: |
+          xcodebuild archive \
+            -project "$PROJECT_PATH" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/VitruvianPhoenix.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS=""
+
+      - name: Package unsigned .ipa
+        run: |
+          APP_DIR="$RUNNER_TEMP/VitruvianPhoenix.xcarchive/Products/Applications"
+          [ -d "$APP_DIR" ] || { echo "ERROR: no .app in archive"; ls -R "$RUNNER_TEMP/VitruvianPhoenix.xcarchive" | head -40; exit 1; }
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP_DIR/"*.app "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -qry VitruvianPhoenix-unsigned.ipa Payload
+          echo "IPA: $(du -h VitruvianPhoenix-unsigned.ipa | cut -f1)"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VitruvianPhoenix-unsigned-ipa
+          path: ${{ runner.temp }}/VitruvianPhoenix-unsigned.ipa
+          retention-days: 30

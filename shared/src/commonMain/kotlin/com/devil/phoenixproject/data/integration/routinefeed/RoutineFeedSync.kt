@@ -33,9 +33,9 @@ class RoutineFeedSync(
         val profileId = activeProfileId() ?: return
         if (!mutex.tryLock()) return
         try {
-            val recorded = Json.decodeFromString<Map<String, Set<String>>>(settings.getString(SETTINGS_KEY, "{}"))
-            val shas = recorded[profileId].orEmpty().toMutableSet()
-            val pending = client.list(config).filter { it.sha !in shas }.sortedBy { it.name }
+            val recorded = Json.decodeFromString<Map<String, Map<String, String>>>(settings.getString(SETTINGS_KEY, "{}"))
+            val shaByPath = recorded[profileId].orEmpty().toMutableMap()
+            val pending = client.list(config).filter { shaByPath[it.path] != it.sha }.sortedBy { it.name }
             val fetched = pending.map { entry ->
                 val content = try {
                     client.fetch(config, entry)
@@ -75,8 +75,8 @@ class RoutineFeedSync(
                         }
                     }
                 }
-                shas += entry.sha
-                settings.putString(SETTINGS_KEY, Json.encodeToString(recorded + (profileId to shas.toSet())))
+                shaByPath[entry.path] = entry.sha
+                settings.putString(SETTINGS_KEY, Json.encodeToString(recorded + (profileId to shaByPath.toMap())))
             }
         } catch (e: CancellationException) {
             throw e
@@ -93,6 +93,6 @@ class RoutineFeedSync(
         (userProfileRepository.activeProfileContext.value as? ActiveProfileContext.Ready)?.profile?.id
 
     companion object {
-        const val SETTINGS_KEY = "routine_feed_imported_shas"
+        const val SETTINGS_KEY = "routine_feed_imported_sha_by_path"
     }
 }

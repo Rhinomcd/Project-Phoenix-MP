@@ -67,6 +67,23 @@ class RoutineFeedSyncTest {
     }
 
     @Test
+    fun revertedFileReimportsItsEarlierVersion() = runTest {
+        val fixture = Fixture()
+        fixture.sync().syncOnce()
+        val routineId = fixture.workouts.getRoutineHeaders("default").single().id
+        fixture.sha = "sha-two"
+        fixture.content = csv(reps = listOf(12, 10, 8))
+        fixture.sync().syncOnce()
+
+        fixture.sha = "sha-one"
+        fixture.content = csv()
+        fixture.sync().syncOnce()
+
+        assertEquals(listOf(8, 8), fixture.workouts.getRoutineById(routineId)?.exercises?.single()?.setReps)
+        fixture.client.close()
+    }
+
+    @Test
     fun invalidCsvIsRecordedAndNotFetchedAgain() = runTest {
         val fixture = Fixture()
         fixture.content = "not Phoenix CSV"

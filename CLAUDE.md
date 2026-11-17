@@ -71,7 +71,7 @@ Foreground entry imports new or changed GitHub routine CSV files through the exi
 Android uses `routine.feed.repo`, `routine.feed.path`, and `routine.feed.token` in `local.properties`, with `ROUTINE_FEED_REPO`, `ROUTINE_FEED_PATH`, and `ROUTINE_FEED_TOKEN` environment fallbacks.
 iOS uses `ROUTINE_FEED_REPO`, `ROUTINE_FEED_PATH`, and `ROUTINE_FEED_TOKEN` in the ignored `iosApp/PhoenixApp/Config/RoutineFeed.xcconfig`; copy the adjacent example.
 The feed is compiled into every build and stays inert unless all three values are non-blank. tvOS always disables it.
-Imported file SHAs persist per profile; a changed SHA retries a previously invalid file.
+The last processed SHA of each file path persists per profile; any change to a file, including a revert, re-imports it.
 
 ### BLE Architecture
 - Library: **Kable** (Kotlin Multiplatform), used from `commonMain` (`data/ble/KableBleConnectionManager.kt`). Android uses a vendored, patched Kable core in `third_party/kable-core-android-patched`.

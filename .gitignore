@@ -21,6 +21,7 @@ gradle/gradle-daemon-jvm.properties
 local.properties
 *.local.properties
 iosApp/PhoenixApp/**/Supabase.xcconfig
+iosApp/PhoenixApp/**/RoutineFeed.xcconfig
 
 # Kotlin
 .kotlin/

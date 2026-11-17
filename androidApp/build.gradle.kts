@@ -278,6 +278,19 @@ val rawSupabaseAnonKey: String = localPropsMap["supabase.anon.key"]?.takeIf { it
     ?: System.getenv("SUPABASE_ANON_KEY")
     ?: ""
 
+val routineFeedRepo = localPropsMap["routine.feed.repo"]?.takeIf { it.isNotBlank() }
+    ?: System.getenv("ROUTINE_FEED_REPO") ?: ""
+val routineFeedPath = localPropsMap["routine.feed.path"]?.takeIf { it.isNotBlank() }
+    ?: System.getenv("ROUTINE_FEED_PATH") ?: ""
+val routineFeedToken = localPropsMap["routine.feed.token"]?.takeIf { it.isNotBlank() }
+    ?: System.getenv("ROUTINE_FEED_TOKEN") ?: ""
+
+fun buildConfigString(value: String): String = "\"" + value
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+    .replace("\n", "\\n")
+    .replace("\r", "\\r") + "\""
+
 // Fall back to placeholder credentials for local debug builds and Gradle Sync if missing
 val supabaseUrl: String = rawSupabaseUrl.ifBlank { "https://placeholder.supabase.co" }
 val supabaseAnonKey: String = rawSupabaseAnonKey.ifBlank { "placeholder-anon-key" }
@@ -325,6 +338,9 @@ android {
         // Supabase config injected from local.properties
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
+        buildConfigField("String", "ROUTINE_FEED_REPO", buildConfigString(routineFeedRepo))
+        buildConfigField("String", "ROUTINE_FEED_PATH", buildConfigString(routineFeedPath))
+        buildConfigField("String", "ROUTINE_FEED_TOKEN", buildConfigString(routineFeedToken))
     }
 
     buildTypes {

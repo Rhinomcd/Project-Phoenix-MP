@@ -1,0 +1,3 @@
+ROUTINE_FEED_REPO = owner/repo
+ROUTINE_FEED_PATH = routines
+ROUTINE_FEED_TOKEN = github-token

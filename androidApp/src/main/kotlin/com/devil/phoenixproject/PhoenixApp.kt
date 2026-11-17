@@ -11,6 +11,8 @@ import coil3.SingletonImageLoader
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.crossfade
 import coil3.util.DebugLogger
+import com.devil.phoenixproject.data.integration.routinefeed.RoutineFeedConfig
+import com.devil.phoenixproject.data.integration.routinefeed.RoutineFeedConfigProvider
 import com.devil.phoenixproject.data.sync.SupabaseConfig
 import com.devil.phoenixproject.di.initKoin
 import com.devil.phoenixproject.ui.theme.applyPersistedApplicationNightMode
@@ -51,6 +53,15 @@ open class PhoenixApp :
             androidContext(this@PhoenixApp)
             modules(
                 module {
+                    single {
+                        RoutineFeedConfigProvider(
+                            RoutineFeedConfig.from(
+                                repo = BuildConfig.ROUTINE_FEED_REPO,
+                                path = BuildConfig.ROUTINE_FEED_PATH,
+                                token = BuildConfig.ROUTINE_FEED_TOKEN,
+                            ),
+                        )
+                    }
                     single {
                         SupabaseConfig(
                             url = BuildConfig.SUPABASE_URL,

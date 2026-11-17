@@ -6,6 +6,7 @@ import co.touchlab.sqliter.DatabaseFileContext
 import com.devil.phoenixproject.data.auth.OAuthLauncher
 import com.devil.phoenixproject.data.integration.HealthIntegration
 import com.devil.phoenixproject.data.integration.HealthWorkoutWriter
+import com.devil.phoenixproject.data.integration.routinefeed.RoutineFeedConfigProvider
 import com.devil.phoenixproject.data.local.DatabaseFileNames
 import com.devil.phoenixproject.data.local.DriverFactory
 import com.devil.phoenixproject.data.local.legacyLibraryRootPath
@@ -79,6 +80,7 @@ actual val platformModule: Module = module {
             SupabaseConfig(url = url, anonKey = anonKey)
         }
     }
+    single { RoutineFeedConfigProvider(null) }
     single { DriverFactory() }
     single<Settings> { NSUserDefaultsSettings(NSUserDefaults.standardUserDefaults) }
     @OptIn(ExperimentalSettingsImplementation::class)

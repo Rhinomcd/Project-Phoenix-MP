@@ -65,6 +65,14 @@ shared/src/
 - **SQLDelight** for type-safe multiplatform database
 - **Coroutines + Flow** for async operations and reactive streams
 
+### Routine feed (personal builds)
+
+Foreground entry imports new or changed GitHub routine CSV files through the existing CSV import path, overwriting matching routine names in place.
+Android uses `routine.feed.repo`, `routine.feed.path`, and `routine.feed.token` in `local.properties`, with `ROUTINE_FEED_REPO`, `ROUTINE_FEED_PATH`, and `ROUTINE_FEED_TOKEN` environment fallbacks.
+iOS uses `ROUTINE_FEED_REPO`, `ROUTINE_FEED_PATH`, and `ROUTINE_FEED_TOKEN` in the ignored `iosApp/PhoenixApp/Config/RoutineFeed.xcconfig`; copy the adjacent example.
+The feed is compiled into every build and stays inert unless all three values are non-blank. tvOS always disables it.
+Imported file SHAs persist per profile; a changed SHA retries a previously invalid file.
+
 ### BLE Architecture
 - Library: **Kable** (Kotlin Multiplatform), used from `commonMain` (`data/ble/KableBleConnectionManager.kt`). Android uses a vendored, patched Kable core in `third_party/kable-core-android-patched`.
 - UUIDs and timeouts live in `util/BleConstants.kt`:

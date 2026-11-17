@@ -41,6 +41,7 @@ import com.devil.phoenixproject.data.integration.intervals.IntervalsExportCoordi
 import com.devil.phoenixproject.data.integration.intervals.WorkoutCompletionFinalizer
 import com.devil.phoenixproject.data.migration.MigrationManager
 import com.devil.phoenixproject.data.migration.RequiredMigrationState
+import com.devil.phoenixproject.data.integration.routinefeed.RoutineFeedSync
 import com.devil.phoenixproject.data.repository.ActiveProfileContext
 import com.devil.phoenixproject.data.repository.ExerciseRepository
 import com.devil.phoenixproject.data.repository.UserProfileRepository
@@ -67,6 +68,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.mp.KoinPlatform
 import projectphoenix.shared.generated.resources.Res
 import projectphoenix.shared.generated.resources.action_retry
@@ -216,6 +218,7 @@ private fun AppLifecycleObserver(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
+    val routineFeedSync: RoutineFeedSync = koinInject()
 
     DisposableEffect(lifecycleOwner, syncTriggerManager) {
         val observer = LifecycleEventObserver { _, event ->
@@ -233,7 +236,10 @@ private fun AppLifecycleObserver(
                     // INDEPENDENT Intervals recovery (issue #1384 P3): after the startup
                     // prerequisites but outside every portal success/auth/debounce gate, and
                     // never awaited by or gating the portal sync below. Non-fatal on error.
-                    if (startupReady) runIntervalsRecovery()
+                    if (startupReady) {
+                        scope.launch(Dispatchers.IO) { routineFeedSync.syncOnce() }
+                        runIntervalsRecovery()
+                    }
                     try {
                         syncTriggerManager.onAppForeground()
                     } catch (e: CancellationException) {

@@ -8,3 +8,9 @@ SUPABASE_URL =
 SUPABASE_ANON_KEY =
 
 #include? "Supabase.xcconfig"
+
+ROUTINE_FEED_REPO =
+ROUTINE_FEED_PATH =
+ROUTINE_FEED_TOKEN =
+
+#include? "RoutineFeed.xcconfig"

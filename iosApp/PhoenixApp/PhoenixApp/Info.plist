@@ -8,6 +8,12 @@
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>
 	<string>$(SUPABASE_URL)</string>
+	<key>ROUTINE_FEED_REPO</key>
+	<string>$(ROUTINE_FEED_REPO)</string>
+	<key>ROUTINE_FEED_PATH</key>
+	<string>$(ROUTINE_FEED_PATH)</string>
+	<key>ROUTINE_FEED_TOKEN</key>
+	<string>$(ROUTINE_FEED_TOKEN)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

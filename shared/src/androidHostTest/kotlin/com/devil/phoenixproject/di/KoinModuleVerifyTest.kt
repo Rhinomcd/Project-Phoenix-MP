@@ -1,5 +1,6 @@
 package com.devil.phoenixproject.di
 
+import com.devil.phoenixproject.data.integration.routinefeed.RoutineFeedConfig
 import com.devil.phoenixproject.data.integration.HealthIntegration
 import com.devil.phoenixproject.data.integration.HealthWorkoutWriter
 import com.devil.phoenixproject.data.local.DriverFactory
@@ -33,6 +34,7 @@ class KoinModuleVerifyTest {
                 DataBackupManager::class,
                 ConnectivityChecker::class,
                 SupabaseConfig::class,
+                RoutineFeedConfig::class,
                 // Platform-provided factories
                 SafeWordListenerFactory::class,
                 // Platform-provided health integration (Android: HealthIntegration(context), iOS: HealthIntegration())

@@ -6,6 +6,8 @@ import com.devil.phoenixproject.data.auth.OAuthLauncher
 import com.devil.phoenixproject.data.integration.HealthIntegration
 import com.devil.phoenixproject.data.integration.HealthWorkoutWriter
 import com.devil.phoenixproject.data.integration.intervals.IntegrationStorageGate
+import com.devil.phoenixproject.data.integration.routinefeed.RoutineFeedConfig
+import com.devil.phoenixproject.data.integration.routinefeed.RoutineFeedConfigProvider
 import com.devil.phoenixproject.data.local.DatabaseFileNames
 import com.devil.phoenixproject.data.local.DriverFactory
 import com.devil.phoenixproject.data.local.IosIntegrationBackupExclusionGate
@@ -84,6 +86,16 @@ actual val platformModule: Module = module {
         }
 
         SupabaseConfig(url = url, anonKey = anonKey)
+    }
+    single {
+        val bundle = NSBundle.mainBundle
+        RoutineFeedConfigProvider(
+            RoutineFeedConfig.from(
+                repo = (bundle.objectForInfoDictionaryKey("ROUTINE_FEED_REPO") as? String).orEmpty(),
+                path = (bundle.objectForInfoDictionaryKey("ROUTINE_FEED_PATH") as? String).orEmpty(),
+                token = (bundle.objectForInfoDictionaryKey("ROUTINE_FEED_TOKEN") as? String).orEmpty(),
+            ),
+        )
     }
     single { DriverFactory() }
     single<Settings> {
